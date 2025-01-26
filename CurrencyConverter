@@ -1,0 +1,117 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.*;
+
+// Define the CurrencyConverterInterface
+interface CurrencyConverterInterface {
+    double convertCurrency(double amount, String sourceCurrency, String targetCurrency);
+}
+
+public class CurrencyConverter {
+
+    // Predefined exchange rates stored in a map
+    private static final Map<String, Double> exchangeRates = new HashMap<>();
+
+    static {
+        // Exchange rates relative to USD
+        exchangeRates.put("USD", 1.0);
+        exchangeRates.put("EUR", 0.85);
+        exchangeRates.put("GBP", 0.75);
+        exchangeRates.put("INR", 74.5);
+        exchangeRates.put("JPY", 110.0);
+        exchangeRates.put("AUD", 1.35);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new CurrencyConverterGUI().setVisible(true);
+        });
+    }
+
+    // GUI Class for Currency Converter
+    static class CurrencyConverterGUI extends JFrame {
+        private final JTextField amountField;
+        private final JComboBox<String> sourceCurrencyBox;
+        private final JComboBox<String> targetCurrencyBox;
+        private final JLabel resultLabel;
+
+        public CurrencyConverterGUI() {
+            setTitle("Currency Converter");
+            setSize(400, 300);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setLayout(new GridLayout(5, 2, 10, 10));
+
+            // UI Components
+            JLabel amountLabel = new JLabel("Enter Amount:");
+            amountField = new JTextField();
+
+            JLabel sourceCurrencyLabel = new JLabel("Source Currency:");
+            sourceCurrencyBox = new JComboBox<>(exchangeRates.keySet().toArray(new String[0]));
+
+            JLabel targetCurrencyLabel = new JLabel("Target Currency:");
+            targetCurrencyBox = new JComboBox<>(exchangeRates.keySet().toArray(new String[0]));
+
+            JButton convertButton = new JButton("Convert");
+            resultLabel = new JLabel("Result: ");
+
+            // Add components to frame
+            add(amountLabel);
+            add(amountField);
+            add(sourceCurrencyLabel);
+            add(sourceCurrencyBox);
+            add(targetCurrencyLabel);
+            add(targetCurrencyBox);
+            add(new JLabel()); // Empty cell
+            add(convertButton);
+            add(new JLabel()); // Empty cell
+            add(resultLabel);
+
+            // Button action listener
+            convertButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    performConversion();
+                }
+            });
+        }
+
+        private void performConversion() {
+            try {
+                double amount = Double.parseDouble(amountField.getText());
+                String sourceCurrency = (String) sourceCurrencyBox.getSelectedItem();
+                String targetCurrency = (String) targetCurrencyBox.getSelectedItem();
+
+                CurrencyConverterImplementation converter = new CurrencyConverterImplementation();
+                double convertedAmount = converter.convertCurrency(amount, sourceCurrency, targetCurrency);
+
+                if (convertedAmount == -1) {
+                    resultLabel.setText("Invalid currency code provided.");
+                } else {
+                    resultLabel.setText(String.format("Result: %.2f %s", convertedAmount, targetCurrency));
+                }
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Invalid amount. Please enter a numeric value.");
+            }
+        }
+    }
+
+    // Implement the interface in a static class
+    static class CurrencyConverterImplementation implements CurrencyConverterInterface {
+
+        @Override
+        public double convertCurrency(double amount, String sourceCurrency, String targetCurrency) {
+            // Validate currencies
+            if (!exchangeRates.containsKey(sourceCurrency) || !exchangeRates.containsKey(targetCurrency)) {
+                return -1;
+            }
+
+            // Convert source currency to USD
+            double amountInUSD = amount / exchangeRates.get(sourceCurrency);
+
+            // Convert USD to target currency
+            return amountInUSD * exchangeRates.get(targetCurrency);
+        }
+    }
+}
